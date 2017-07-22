@@ -1,4 +1,94 @@
+<video id="recordVideo" autoplay></video>
+
+<div>
+    <button id="record" disabled>Start Recording</button>
+</div>
+
 <form id="video_upload" method="post" action="">
     {% csrf_token %}
     {{ form.file }}
 </form>
+
+<script type="text/javascript">
+    var recordedBlobs;
+    var mediaRecorder;
+
+    var form = document.querySelector('form');
+
+    var recordVideo = document.querySelector('video#recordVideo');
+    var recordButton = document.querySelector('button#record');
+    recordButton.onclick = toggleRecording;
+
+    var constraints = {
+        audio: true,
+        video: true
+    };
+
+    function handleSuccess(stream) {
+        recordButton.disabled = false;
+        window.stream = stream;
+        if (window.URL) {
+            recordVideo.src = window.URL.createObjectURL(stream);
+        } else {
+            recordVideo.src = stream;
+        }
+        recordVideo.muted = true;
+        playVideo.style.display = 'none';
+    }
+
+    function handleError(error) {
+        console.log('navigator.getUserMedia error: ', error)
+    }
+
+    navigator.mediaDevices.getUserMedia(constraints).
+    then(handleSuccess).catch(handleError);
+
+    function handleDataAvailable(event) {
+        if (event.data && event.data.size > 0) {
+            recordedBlobs.push(event.data);
+        }
+    }
+
+    function handleStop(event) {
+        console.log('Recorder stopped: ', event);
+    }
+
+    function toggleRecording() {
+        if (recordButton.textContent === 'Start Recording') {
+            startRecording();
+        } else {
+            stopRecording();
+            tracks = stream.getTracks();
+            for (var i = 0; i < tracks.length; i++) {
+                tracks[i].enabled = false;
+            }
+            recordButton.textContent = 'Upload';
+            recordButton.onclick = upload;
+        }
+    }
+
+    function startRecording() {
+        recordedBlobs = [];
+        try {
+            mediaRecorder = new MediaRecorder(window.stream);
+        } catch(e) {
+            console.error('Exception while creating MediaRecorder: ' + e);
+            return;
+        }
+        console.log('Created MediaRecorder', mediaRecorder);
+        recordButton.textContent = 'Stop Recording';
+        mediaRecorder.onstop = handleStop;
+        mediaRecorder.ondataavailable = handleDataAvailable;
+        mediaRecorder.start(10); // 10ms blobs of data
+        console.log('MediaRecorder started', mediaRecorder);
+    }
+
+    function stopRecording() {
+        mediaRecorder.stop();
+        console.log('Recorded Blobs: ', recordedBlobs);
+    }
+
+    function upload() {
+        // This is what I can't figure out how to fill in.
+    }
+</script>

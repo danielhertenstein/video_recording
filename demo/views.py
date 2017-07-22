@@ -1,4 +1,7 @@
 from django.shortcuts import render
 
+from demo.forms import VideoForm
+
 def index(request):
-    render(request, 'demo/index.html')
+    form = VideoForm()
+    return render(request, 'demo/index.html', {'form': form})

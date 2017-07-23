@@ -4,10 +4,15 @@
     <button id="record" disabled>Start Recording</button>
 </div>
 
-<form id="video_upload" method="post" action="">
+<form id="video_upload" method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {{ form.file }}
+    <button>Upload</button>
 </form>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
 
 <script type="text/javascript">
     var recordedBlobs;
@@ -33,7 +38,6 @@
             recordVideo.src = stream;
         }
         recordVideo.muted = true;
-        playVideo.style.display = 'none';
     }
 
     function handleError(error) {
@@ -62,8 +66,7 @@
             for (var i = 0; i < tracks.length; i++) {
                 tracks[i].enabled = false;
             }
-            recordButton.textContent = 'Upload';
-            recordButton.onclick = upload;
+            recordButton.textContent = 'Done';
         }
     }
 
@@ -88,7 +91,20 @@
         console.log('Recorded Blobs: ', recordedBlobs);
     }
 
-    function upload() {
-        // This is what I can't figure out how to fill in.
-    }
+    $("form#video_upload").submit(function() {
+        var formData = new FormData(this);
+        my_blob = new Blob(recordedBlobs, {type: 'video/webm'});
+        formData.append('fname', 'my_video.webm');
+        formData.append('data', my_blob);
+
+        $.ajax({
+            url: {% url "index" %},
+            type: 'POST',
+            data: formData,
+            async: false,
+            cache: false,
+            contentType: false,
+            processData: false
+        });
+    });
 </script>
